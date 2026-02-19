@@ -11,7 +11,56 @@ from sklearn.preprocessing import MinMaxScaler
 # -----------------------------
 st.set_page_config(page_title="CashPulse", layout="wide")
 
-st.title("💳 CashPulse: Pre-Delinquency Intelligence Engine")
+# -----------------------------
+# FORCE BLACK TEXT + FIX VISIBILITY
+# -----------------------------
+st.markdown("""
+<style>
+
+/* Force black text everywhere */
+html, body, [class*="css"]  {
+    color: #000000 !important;
+    font-family: Arial, sans-serif;
+}
+
+/* Background */
+.stApp {
+    background-color: #F6F1E9;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #EADFD0;
+    color: black !important;
+}
+
+/* Headings */
+h1, h2, h3 {
+    color: black !important;
+}
+
+/* Metric Containers */
+[data-testid="metric-container"] {
+    background-color: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    color: black !important;
+}
+
+/* Fix faded transparency */
+.stMarkdown, .stText, p {
+    color: black !important;
+    opacity: 1 !important;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# -----------------------------
+# Header
+# -----------------------------
+st.title("CashPulse: Pre-Delinquency Intelligence Engine")
 
 # -----------------------------
 # Load Data & Model
@@ -68,9 +117,9 @@ features = [
 ]
 
 # -----------------------------
-# Sidebar Portfolio Insights
+# Sidebar
 # -----------------------------
-st.sidebar.title("📊 Portfolio Insights")
+st.sidebar.title("Portfolio Insights")
 
 portfolio_probs = []
 for i in df["customer_id"]:
@@ -86,42 +135,31 @@ st.sidebar.metric("High Risk Customers", sum(df["portfolio_risk"] > 0.85))
 # -----------------------------
 # Customer Selection
 # -----------------------------
-customer_id = st.selectbox(
-    "Select Customer ID",
-    df["customer_id"].unique()
-)
-
+customer_id = st.selectbox("Select Customer ID", df["customer_id"].unique())
 customer_data = df[df["customer_id"] == customer_id]
 
 # -----------------------------
-# Customer Profile Section
+# Customer Profile
 # -----------------------------
-st.markdown("## 👤 Customer Profile")
+st.header("Customer Profile")
 
 colA, colB, colC = st.columns(3)
 
-colA.write(f"**Name:** {customer_data['customer_name'].values[0]}")
-colB.write(f"**Email:** {customer_data['email'].values[0]}")
-colC.write(f"**Account Created:** {customer_data['account_created'].values[0]}")
+colA.write(f"Name: {customer_data['customer_name'].values[0]}")
+colB.write(f"Email: {customer_data['email'].values[0]}")
+colC.write(f"Account Created: {customer_data['account_created'].values[0]}")
 
 # -----------------------------
 # Stress Breakdown
 # -----------------------------
-st.markdown("## 📉 4-Dimensional Financial Stress Breakdown")
+st.header("4-Dimensional Financial Stress Breakdown")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric("Income Stability",
-            round(float(customer_data["income_stability_index"]), 3))
-
-col2.metric("Liquidity Strength",
-            round(float(customer_data["liquidity_strength_index"]), 3))
-
-col3.metric("Debt Pressure",
-            round(float(customer_data["debt_pressure_index"]), 3))
-
-col4.metric("Behavioral Shift",
-            round(float(customer_data["behavioral_shift_index"]), 3))
+col1.metric("Income Stability", round(float(customer_data["income_stability_index"]), 3))
+col2.metric("Liquidity Strength", round(float(customer_data["liquidity_strength_index"]), 3))
+col3.metric("Debt Pressure", round(float(customer_data["debt_pressure_index"]), 3))
+col4.metric("Behavioral Shift", round(float(customer_data["behavioral_shift_index"]), 3))
 
 # -----------------------------
 # Risk Prediction
@@ -129,9 +167,8 @@ col4.metric("Behavioral Shift",
 X = customer_data[features]
 risk_prob = model.predict_proba(X)[0][1]
 
-st.markdown("## 📊 Risk Assessment")
-st.metric("Predicted Default Probability (30 Days)",
-          round(risk_prob, 3))
+st.header("Risk Assessment")
+st.metric("Predicted Default Probability (30 Days)", round(risk_prob, 3))
 
 # -----------------------------
 # Risk Band & Intervention
@@ -146,27 +183,28 @@ elif risk_prob < 0.85:
     st.error("High Risk")
     intervention = "Offer EMI Restructuring"
 else:
-    st.error("🚨 Pre-Delinquency Alert")
+    st.error("Pre-Delinquency Alert")
     intervention = "Offer Payment Holiday (Customer Consent Required)"
 
-st.markdown("## 🎯 Recommended Intervention")
+st.header("Recommended Intervention")
 st.info(intervention)
 
 # -----------------------------
-# Portfolio Risk Distribution
+# Portfolio Risk Distribution (FIXED SIZE)
 # -----------------------------
-st.markdown("## 📈 Portfolio Risk Distribution")
+st.header("Portfolio Risk Distribution")
 
-fig_hist = plt.figure()
-plt.hist(df["portfolio_risk"], bins=20)
-plt.xlabel("Risk Probability")
-plt.ylabel("Number of Customers")
-st.pyplot(fig_hist)
+fig_hist, ax = plt.subplots(figsize=(6, 3), dpi=80)
+ax.hist(df["portfolio_risk"], bins=20)
+ax.set_xlabel("Risk Probability")
+ax.set_ylabel("Number of Customers")
+plt.tight_layout()
+st.pyplot(fig_hist, use_container_width=False)
 
 # -----------------------------
-# Stress Radar Chart
+# Radar Chart (FIXED SIZE)
 # -----------------------------
-st.markdown("## 🧠 Stress Radar Overview")
+st.header("Stress Radar Overview")
 
 labels = ["Income", "Liquidity", "Debt", "Behavior"]
 
@@ -178,53 +216,27 @@ values = [
 ]
 
 values += values[:1]
-
 angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False).tolist()
 angles += angles[:1]
 
-fig_radar = plt.figure()
-ax = fig_radar.add_subplot(111, polar=True)
+fig_radar, ax = plt.subplots(figsize=(4,4), dpi=80, subplot_kw=dict(polar=True))
 ax.plot(angles, values)
-ax.fill(angles, values, alpha=0.3)
+ax.fill(angles, values, alpha=0.25)
 ax.set_xticks(angles[:-1])
 ax.set_xticklabels(labels)
-st.pyplot(fig_radar)
+ax.set_ylim(0,1)
+plt.tight_layout()
+st.pyplot(fig_radar, use_container_width=False)
 
 # -----------------------------
-# Interactive Simulation
+# SHAP Explainability (FIXED SIZE)
 # -----------------------------
-st.sidebar.title("🔬 Simulate Stress Scenario")
-
-sim_income = st.sidebar.slider("Income Stability", 0.0, 1.0,
-                               float(customer_data["income_stability_index"]))
-
-sim_liq = st.sidebar.slider("Liquidity Strength", 0.0, 1.0,
-                            float(customer_data["liquidity_strength_index"]))
-
-sim_debt = st.sidebar.slider("Debt Pressure", 0.0, 1.0,
-                             float(customer_data["debt_pressure_index"]))
-
-sim_beh = st.sidebar.slider("Behavioral Shift", 0.0, 1.0,
-                            float(customer_data["behavioral_shift_index"]))
-
-sim_score = 0.30*sim_income + 0.25*sim_liq + 0.25*sim_debt + 0.20*sim_beh
-
-sim_df = pd.DataFrame([[sim_income, sim_liq, sim_debt, sim_beh, sim_score]],
-                      columns=features)
-
-sim_prob = model.predict_proba(sim_df)[0][1]
-
-st.sidebar.metric("Simulated Risk", round(sim_prob, 3))
-
-# -----------------------------
-# SHAP Explainability
-# -----------------------------
-st.markdown("## 🔍 Explainability (Why is this customer risky?)")
+st.header("Explainability")
 
 explainer = shap.TreeExplainer(model)
 shap_values = explainer.shap_values(X)
 
-fig_shap = plt.figure()
+fig_shap = plt.figure(figsize=(7,3), dpi=80)
 shap.waterfall_plot(
     shap.Explanation(
         values=shap_values[0],
@@ -234,5 +246,5 @@ shap.waterfall_plot(
     ),
     show=False
 )
-
-st.pyplot(fig_shap)
+plt.tight_layout()
+st.pyplot(fig_shap, use_container_width=False)
